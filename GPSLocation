@@ -1,1 +1,77 @@
 using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class GPSLocation : Monobehaviour
+{
+    public Text GPSStatus;
+    public Text latitudeValue;
+    public Text longitudeValue;
+    public Text altitudeValue;
+    public Text horizontalAccuracyValue;
+    public Text timestampValue;
+
+    void Start()
+    {
+        StartCoroutine(GPSLoc());
+    }
+
+    IEnumerator GPSLoc()
+    {
+        // Check if user has location service enabled
+        if (!Input.location.isEnabledByUser)
+            yield break;
+
+        // Start service befor querying location
+        Input.location.Start();
+
+        // Wait until service initializes
+        int maxWait = 20;
+        while (Input.location.status == LocationServiceStatus.Initializing && maxWait > 0) {
+            yield return new WaitForSeconds(1);
+            maxWait--;
+        }
+
+        // Service didn't initialize in 20 sec
+        if (maxWait < 1)
+        {
+            GPSStatus.text = "Time out!";
+            yield break;
+        }
+
+        // Connection failed
+        if (Input.location.status == LocationServiceStatus.Failed)
+        {
+            GPSStatus.text = "Unable to determine device location";
+            yield break;
+        }
+        else
+        {
+            // Access granted
+            GPSStatus.text = "Running";
+            InvokeRepeating("UpdateGPSData", 0.5f, 1f);
+        }
+
+    } // End of GPSLoc
+
+    private void UpdateGPSData()
+    {
+        if (Input.location.status == LocationServiceStatus.Running)
+        {
+            // Access granted to GPS values and has been initialized
+            GPSStatus.text = "Running";
+            latitudeValue.text = Input.location.lastData.latitude.ToString();
+            longitudeValue.text = Input.location.lastData.longitude.ToString();
+            altitudeValue.text = Input.location.lastData.altitude.ToString();
+            horizontalAccuracyValue.text = Input.location.lastData.horizontalAccuracy.ToString();
+            timestampValue.text = Input.location.lastData.timestamp.ToString();
+        }
+        else
+        {
+            // Service is stopped
+            GPSStatus.text = "Stopped";
+        }
+
+    } // End of UpdateGPSData
+
+} // End of GPSLocation
